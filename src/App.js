@@ -1,6 +1,7 @@
 import './App.css';
 import Basemap from '@arcgis/core/Basemap';
 import esriConfig from '@arcgis/core/config.js';
+import Circle from '@arcgis/core/geometry/Circle';
 import Graphic from '@arcgis/core/Graphic';
 import GraphicsLayer from '@arcgis/core/layers/GraphicsLayer';
 import VectorTileLayer from '@arcgis/core/layers/VectorTileLayer';
@@ -10,12 +11,9 @@ import Search from '@arcgis/core/widgets/Search';
 import Zoom from '@arcgis/core/widgets/Zoom';
 import * as arcgisRest from '@esri/arcgis-rest-places';
 import * as requestTools from '@esri/arcgis-rest-request';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 export default function App() {
-  const [lon, setLon] = useState('');
-  const [lat, setLat] = useState('');
-
   const apiKey =
     'AAPKdad20453b60944a48fc56ff00760d6e8RWGSzSxCJrKk5hUxSUuYfzhxFGVXbERKmOO-xqrJmNGGWJaGaEEpkKnC5ppVfb-T';
 
@@ -26,6 +24,8 @@ export default function App() {
   const serviceUrl = `https://places-api.arcgis.com/arcgis/rest/services/places-service/v1/places/near-point?categoryIds=14000&xmin=16.36&ymin=48.21&xmax=16.2&ymax=48.1&&token=${apiKey}&f=pjson`;
 
   const mapRef = useRef(null);
+
+  const radius = 5000;
 
   useEffect(() => {
     const vectorTileLayer = new VectorTileLayer({
@@ -103,13 +103,38 @@ export default function App() {
           .findPlacesNearPoint({
             x: lon,
             y: lat,
-            radius: 10000,
+            radius,
             categoryIds: ['16000'],
             authentication,
           })
           .then((response) => {
+            view.goTo({
+              target: [lon, lat],
+              zoom: 11,
+            });
+
             response.results.forEach((result) => {
               getDetails(result.placeId);
+
+              const circleGeometry = new Circle({
+                center: [lon, lat],
+                geodesic: true,
+                numberOfPoints: 100,
+                radius: radius,
+              });
+
+              const circleGraphic = new Graphic({
+                geometry: circleGeometry,
+                symbol: {
+                  type: 'simple-fill',
+                  color: [207, 207, 207, 0.07],
+                  outline: {
+                    width: 2,
+                    color: [245, 154, 154, 0.1],
+                  },
+                },
+              });
+              graphicsLayer.add(circleGraphic);
 
               const point = {
                 //Create a point
@@ -135,6 +160,7 @@ export default function App() {
               });
 
               graphicsLayer.add(pointGraphic);
+
               map.add(graphicsLayer);
             });
           });
