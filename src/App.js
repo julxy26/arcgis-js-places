@@ -93,6 +93,7 @@ export default function App() {
     }
 
     view.on('click', function (event) {
+      graphicsLayer.removeAll();
       const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
       const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
       console.log('click', lat, lon);
@@ -116,6 +117,7 @@ export default function App() {
                 longitude: result.location.x,
                 latitude: result.location.y,
               };
+
               const simpleMarkerSymbol = {
                 type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
                 style: 'circle',
