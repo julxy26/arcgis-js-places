@@ -1,8 +1,34 @@
 @import "https://js.arcgis.com/4.26/@arcgis/core/assets/esri/themes/light/main.css";
+@import "@esri/calcite-components/dist/calcite/calcite.css";
 
-body, #viewDiv {
+body {
+  overflow: hidden;
+}
+
+#viewDiv {
   padding: 0;
   margin: 0;
   height: 100vh;
   width: 100vw;
+}
+
+.toggle-btn {
+  position: absolute;
+  right: 10px;
+  top: 20px;
+}
+
+
+.btn-container {
+  width: auto;
+  height: auto;
+  position: absolute;
+  top: 25px;
+  right: 65px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.category-btn{
+  margin: 5px;
 }

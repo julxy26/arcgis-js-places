@@ -1,4 +1,8 @@
 import './App.css';
+import '@esri/calcite-components/dist/calcite/calcite.css';
+import '@esri/calcite-components/dist/components/calcite-button';
+import '@esri/calcite-components/dist/components/calcite-panel';
+import '@esri/calcite-components/dist/components/calcite-action';
 import Basemap from '@arcgis/core/Basemap';
 import esriConfig from '@arcgis/core/config.js';
 import Circle from '@arcgis/core/geometry/Circle';
@@ -11,7 +15,15 @@ import Search from '@arcgis/core/widgets/Search';
 import Zoom from '@arcgis/core/widgets/Zoom';
 import * as arcgisRest from '@esri/arcgis-rest-places';
 import * as requestTools from '@esri/arcgis-rest-request';
-import React, { useEffect, useRef } from 'react';
+import {
+  CalciteAction,
+  CalciteButton,
+  CalcitePanel,
+} from '@esri/calcite-components-react';
+import { setAssetPath } from '@esri/calcite-components/dist/components';
+import React, { useEffect, useRef, useState } from 'react';
+
+setAssetPath('https://js.arcgis.com/calcite-components/1.3.1/assets');
 
 export default function App() {
   const apiKey =
@@ -27,23 +39,30 @@ export default function App() {
 
   const radius = 5000;
 
+  const [categoryArr, setCategoryArr] = useState([]);
+  const [icon, setIcon] = useState('chevrons-right');
+  const [width, setWidth] = useState('auto');
+  const [categoryName, setCategoryName] = useState('');
+
+  const categorySet = new Set();
+
+  const vectorTileLayer = new VectorTileLayer({
+    url: 'https://arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/resources/styles/root.json',
+  });
+
+  const basemap = new Basemap({
+    baseLayers: [vectorTileLayer],
+    title: 'My Map',
+    id: 'My Map',
+    thumbnailUrl:
+      'https://austria.maps.arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/info/thumbnail/thumbnail1674806732851.png',
+  });
+
+  const map = new Map({
+    basemap: basemap,
+  });
+
   useEffect(() => {
-    const vectorTileLayer = new VectorTileLayer({
-      url: 'https://arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/resources/styles/root.json',
-    });
-
-    const basemap = new Basemap({
-      baseLayers: [vectorTileLayer],
-      title: 'My Map',
-      id: 'My Map',
-      thumbnailUrl:
-        'https://austria.maps.arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/info/thumbnail/thumbnail1674806732851.png',
-    });
-
-    const map = new Map({
-      basemap: basemap,
-    });
-
     const view = new MapView({
       container: mapRef.current,
       map: map,
@@ -80,6 +99,23 @@ export default function App() {
 
     const graphicsLayer = new GraphicsLayer();
 
+    function getCategories() {
+      arcgisRest
+        .getCategories({
+          authentication,
+        })
+        .then((response) => {
+          response.categories.forEach((category) => {
+            if (category.fullLabel[0]) {
+              categorySet.add(category.fullLabel[0]);
+            }
+          });
+          setCategoryArr(categorySet);
+        });
+    }
+
+    getCategories();
+
     function getDetails(placeId) {
       arcgisRest
         .getPlaceDetails({
@@ -93,10 +129,10 @@ export default function App() {
     }
 
     view.on('click', function (event) {
+      console.log('viewon', categoryName);
       graphicsLayer.removeAll();
       const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
       const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
-      console.log('click', lat, lon);
 
       if (lon && lat) {
         arcgisRest
@@ -104,7 +140,7 @@ export default function App() {
             x: lon,
             y: lat,
             radius,
-            categoryIds: ['16000'],
+            searchText: categoryName,
             authentication,
           })
           .then((response) => {
@@ -113,6 +149,7 @@ export default function App() {
               zoom: 11,
             });
 
+            console.log('fpnp', response.results);
             response.results.forEach((result) => {
               getDetails(result.placeId);
 
@@ -166,7 +203,47 @@ export default function App() {
           });
       }
     });
-  }, []);
+  }, [categoryName]);
 
-  return <div id="viewDiv" ref={mapRef}></div>;
+  function handlePanelWidth() {
+    if (icon === 'chevrons-right') {
+      setIcon('chevrons-left');
+      setWidth('0px');
+    } else {
+      setIcon('chevrons-right');
+      setWidth('auto');
+    }
+  }
+
+  return (
+    <div className="App">
+      <div id="viewDiv" ref={mapRef}>
+        <CalciteAction
+          icon={icon}
+          onClick={handlePanelWidth}
+          text="Categories"
+          className="toggle-btn"
+        ></CalciteAction>
+        <CalcitePanel
+          className="btn-container"
+          id="btn-container"
+          style={{ width: width }}
+        >
+          {Array.from(categoryArr).map((categoryLabel) => (
+            <CalciteButton
+              key={categoryLabel}
+              className="category-btn"
+              value={categoryLabel}
+              round
+              onClick={(e) => {
+                setCategoryName(e.target.value);
+              }}
+            >
+              {categoryLabel}
+            </CalciteButton>
+          ))}
+        </CalcitePanel>
+      </div>
+    </div>
+  );
 }
