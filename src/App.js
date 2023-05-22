@@ -29,8 +29,6 @@ export default function App() {
   const apiKey =
     'AAPKdad20453b60944a48fc56ff00760d6e8RWGSzSxCJrKk5hUxSUuYfzhxFGVXbERKmOO-xqrJmNGGWJaGaEEpkKnC5ppVfb-T';
 
-  const authentication = requestTools.ApiKeyManager.fromKey(apiKey);
-
   esriConfig.apiKey = apiKey;
 
   const serviceUrl = `https://places-api.arcgis.com/arcgis/rest/services/places-service/v1/places/near-point?categoryIds=14000&xmin=16.36&ymin=48.21&xmax=16.2&ymax=48.1&&token=${apiKey}&f=pjson`;
@@ -42,27 +40,32 @@ export default function App() {
   const [categoryArr, setCategoryArr] = useState([]);
   const [icon, setIcon] = useState('chevrons-right');
   const [width, setWidth] = useState('auto');
-  const [categoryName, setCategoryName] = useState('');
+  const [categoryName, setCategoryName] = useState('All');
+  const [mapView, setMapView] = useState(new MapView());
+  const [map, setMap] = useState(new Map());
 
   const categorySet = new Set();
 
-  const vectorTileLayer = new VectorTileLayer({
-    url: 'https://arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/resources/styles/root.json',
-  });
+  const authentication = requestTools.ApiKeyManager.fromKey(apiKey);
 
-  const basemap = new Basemap({
-    baseLayers: [vectorTileLayer],
-    title: 'My Map',
-    id: 'My Map',
-    thumbnailUrl:
-      'https://austria.maps.arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/info/thumbnail/thumbnail1674806732851.png',
-  });
-
-  const map = new Map({
-    basemap: basemap,
-  });
+  const graphicsLayer = new GraphicsLayer();
 
   useEffect(() => {
+    const vectorTileLayer = new VectorTileLayer({
+      url: 'https://arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/resources/styles/root.json',
+    });
+
+    const basemap = new Basemap({
+      baseLayers: [vectorTileLayer],
+      title: 'My Map',
+      id: 'My Map',
+      thumbnailUrl:
+        'https://austria.maps.arcgis.com/sharing/rest/content/items/9a171e7c0a2c4093ac20a184e6d4a9a9/info/thumbnail/thumbnail1674806732851.png',
+    });
+    const map = new Map({
+      basemap: basemap,
+    });
+
     const view = new MapView({
       container: mapRef.current,
       map: map,
@@ -97,8 +100,6 @@ export default function App() {
       position: 'top-left',
     });
 
-    const graphicsLayer = new GraphicsLayer();
-
     function getCategories() {
       arcgisRest
         .getCategories({
@@ -108,14 +109,21 @@ export default function App() {
           response.categories.forEach((category) => {
             if (category.fullLabel[0]) {
               categorySet.add(category.fullLabel[0]);
+              setCategoryArr(categorySet);
             }
           });
-          setCategoryArr(categorySet);
         });
     }
 
     getCategories();
 
+    setMapView(view);
+
+    setMap(map);
+  }, []);
+
+  useEffect(() => {
+    console.log(categoryName);
     function getDetails(placeId) {
       arcgisRest
         .getPlaceDetails({
@@ -128,13 +136,15 @@ export default function App() {
         });
     }
 
-    view.on('click', function (event) {
+    mapView.on('click', function (event) {
       console.log('viewon', categoryName);
       graphicsLayer.removeAll();
       const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
       const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
 
       if (lon && lat) {
+        console.log('on click', categoryName);
+
         arcgisRest
           .findPlacesNearPoint({
             x: lon,
@@ -144,66 +154,73 @@ export default function App() {
             authentication,
           })
           .then((response) => {
-            view.goTo({
-              target: [lon, lat],
-              zoom: 11,
-            });
-
-            console.log('fpnp', response.results);
-            response.results.forEach((result) => {
-              getDetails(result.placeId);
-
-              const circleGeometry = new Circle({
-                center: [lon, lat],
-                geodesic: true,
-                numberOfPoints: 100,
-                radius: radius,
+            if (response.results.length > 0) {
+              mapView.goTo({
+                target: [lon, lat],
+                zoom: 11,
               });
 
-              const circleGraphic = new Graphic({
-                geometry: circleGeometry,
-                symbol: {
-                  type: 'simple-fill',
-                  color: [207, 207, 207, 0.07],
-                  outline: {
-                    width: 2,
-                    color: [245, 154, 154, 0.1],
-                  },
-                },
-              });
-              graphicsLayer.add(circleGraphic);
+              console.log('fpnp', response.results);
+              response.results.forEach((result) => {
+                getDetails(result.placeId);
 
-              const point = {
-                //Create a point
-                type: 'point',
-                longitude: result.location.x,
-                latitude: result.location.y,
-              };
+                const point = {
+                  //Create a point
+                  type: 'point',
+                  longitude: result.location.x,
+                  latitude: result.location.y,
+                };
 
-              const simpleMarkerSymbol = {
-                type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
-                style: 'circle',
-                color: [217, 35, 22],
-                size: '10px', // pixels
-                outline: {
+                const simpleMarkerSymbol = {
+                  type: 'simple-marker', // autocasts as new SimpleMarkerSymbol()
+                  style: 'circle',
                   color: [217, 35, 22],
-                  width: '0px',
-                },
-              };
+                  size: '10px', // pixels
+                  outline: {
+                    color: [217, 35, 22],
+                    width: '0px',
+                  },
+                };
 
-              const pointGraphic = new Graphic({
-                geometry: point,
-                symbol: simpleMarkerSymbol,
+                const pointGraphic = new Graphic({
+                  geometry: point,
+                  symbol: simpleMarkerSymbol,
+                });
+
+                graphicsLayer.add(pointGraphic);
               });
-
-              graphicsLayer.add(pointGraphic);
-
-              map.add(graphicsLayer);
-            });
+            } else {
+              mapView.goTo({
+                target: [lon, lat],
+                zoom: 9,
+              });
+              console.log('no results');
+            }
           });
+
+        const circleGeometry = new Circle({
+          center: [lon, lat],
+          geodesic: true,
+          numberOfPoints: 100,
+          radius: radius,
+        });
+
+        const circleGraphic = new Graphic({
+          geometry: circleGeometry,
+          symbol: {
+            type: 'simple-fill',
+            color: [207, 207, 207, 0.5],
+            outline: {
+              width: 2,
+              color: [245, 154, 154, 0.8],
+            },
+          },
+        });
+        graphicsLayer.add(circleGraphic);
+        map.add(graphicsLayer);
       }
     });
-  }, [categoryName]);
+  }, [categoryName, map]);
 
   function handlePanelWidth() {
     if (icon === 'chevrons-right') {
