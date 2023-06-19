@@ -3,6 +3,7 @@
 
 body {
   overflow: hidden;
+  position: relative;
 }
 
 #viewDiv {
@@ -10,13 +11,14 @@ body {
   margin: 0;
   height: 100vh;
   width: 100vw;
+  position: absolute;
 }
 
-.toggle-btn {
+/* .toggle-btn {
   position: absolute;
   right: 10px;
   top: 20px;
-}
+} */
 
 
 .btn-container {
@@ -26,9 +28,24 @@ body {
   top: 25px;
   right: 65px;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: flex-end;
 }
+
 .category-btn{
   margin: 5px;
+  color: var(--calcite-ui-danger);
+}
+
+#search-bar{
+  margin-top: 5px;
+  margin-right: 10px;
+  width: 270px
+}
+.searchAndButtonsContainer{
+  position: absolute;
+  top: 15px;
+  left: 20px;
+  display: flex;
+  flex-direction: row;
 }
