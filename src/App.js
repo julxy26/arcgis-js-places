@@ -159,7 +159,7 @@ export default function App() {
 
                 graphicsLayer.add(pointGraphic);
               };
-              console.log("results3:", result);
+              //console.log("results3:", result);
             });
           } else {
             mapView.goTo({
@@ -270,7 +270,7 @@ export default function App() {
 
               graphicsLayer.graphics.add(pointGraphic);
             };
-            console.log("results1:", result);
+            //console.log("results1:", result);
           });
         } else {
           console.log("no results");
