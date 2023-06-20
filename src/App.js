@@ -107,7 +107,7 @@ export default function App() {
           if (response.results.length > 0) {
             mapView.goTo({
               target: [lon.current, lat.current],
-              zoom: 15,
+              zoom: 15.5,
             });
 
             response.results.forEach((result) => {
