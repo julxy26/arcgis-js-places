@@ -1,6 +1,7 @@
 {
   "name": "arcgis-js-places",
   "version": "0.1.0",
+  "homepage": "https://storymaps.mysynergis.com/StoryMaps/arcgis-places-beta/",
   "private": true,
   "dependencies": {
     "@arcgis/core": "^4.27.1",
@@ -41,7 +42,7 @@
     ]
   },
   "main": "index.js",
-  "repository": "https://github.com/julxy26/arcgis-js-places.git",
-  "author": "julxy26",
+  "repository": "https://dev.azure.com/SynerGISInformationssysteme/Kleinprojekte/_git/places-service-beta",
+  "author": "x.hoi@mysynergis.com",
   "license": "MIT"
 }
