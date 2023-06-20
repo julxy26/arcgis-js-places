@@ -19,14 +19,14 @@ import * as intl from "@arcgis/core/intl";
 import { CalciteButton, CalciteInput } from "@esri/calcite-components-react";
 import { setAssetPath } from "@esri/calcite-components/dist/components";
 import React, { useEffect, useRef, useState } from "react";
+import config from "./config";
 
 setAssetPath("https://js.arcgis.com/calcite-components/1.4.0/assets");
 esriConfig.fontsUrl = "https://static.arcgis.com/fonts";
 
 export default function App() {
   intl.setLocale("de-DE");
-  const apiKey =
-    "AAPKdad20453b60944a48fc56ff00760d6e8RWGSzSxCJrKk5hUxSUuYfzhxFGVXbERKmOO-xqrJmNGGWJaGaEEpkKnC5ppVfb-T";
+  const apiKey = config.API_KEY;
 
   esriConfig.apiKey = apiKey;
 
